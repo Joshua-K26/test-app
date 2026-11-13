@@ -1,3 +1,31 @@
+<?php
+require 'config.php';
+$msg = ""; $ok = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $u = trim($_POST['username']);
+    $e = trim($_POST['email']);
+    $p = $_POST['password'];
+    if ($p !== $_POST['confirm_password']) {
+        $msg = "Passwords do not match.";
+    } else {
+        $h = password_hash($p, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?,?,?)");
+        $stmt->bind_param("sss", $u, $e, $h);
+        try {
+            $stmt->execute();
+            $ok = true;
+            $msg = "Account created! You can now sign in.";
+        } catch (mysqli_sql_exception $ex) {
+            $msg = "Username already taken.";
+        }
+    }
+}
+?>
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +44,7 @@
 
     <link
         rel="stylesheet"
-        href="{{ url_for('static', filename='css/register.css') }}">
+        href="css/register.css">
 
     <link
         rel="stylesheet"
@@ -33,7 +61,7 @@
     <div class="left-panel">
 
         <img
-            src="{{ url_for('static', filename='images/2.png') }}"
+            src="images/2.png"
             class="small-logo"
             alt="Reader's Odyssey">
 
@@ -46,7 +74,7 @@
         </p>
 
         <img
-            src="{{ url_for('static', filename='images/tablet.png') }}"
+            src="images/tablet.png"
             class="tablet-image"
             alt="Magazine Preview">
 
@@ -89,44 +117,29 @@
             <p class="subtitle">
                 Join Reader's Odyssey and start exploring.
             </p>
-
+ 
+<?php if ($msg): ?>
+  <div class="alert <?= $ok ? 'alert-success' : 'alert-danger' ?> mb-3"><?= htmlspecialchars($msg) ?></div>
+<?php endif; ?>
             <form method="POST">
 
-                {{ form.hidden_tag() }}
 
                 <div class="mb-3">
-
-                    {{ form.username(
-                        class="form-control",
-                        placeholder="Username"
-                    ) }}
+                      <input type="text" name="username" class="form-control" placeholder="Username" required>
 
                 </div>
 
                 <div class="mb-3">
-
-                    {{ form.email(
-                        class="form-control",
-                        placeholder="Email Address"
-                    ) }}
-
+                    <input type="email" name="email" class="form-control" placeholder="Email Address" required>
                 </div>
 
                 <div class="mb-3">
 
-                    {{ form.password(
-                        class="form-control",
-                        placeholder="Password"
-                    ) }}
-
+<input type="password" name="password" class="form-control" placeholder="Password" required>
                 </div>
 
                 <div class="mb-3">
-
-                    {{ form.confirm_password(
-                        class="form-control",
-                        placeholder="Confirm Password"
-                    ) }}
+<input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
 
                 </div>
 
@@ -143,9 +156,8 @@
 
                 <div class="d-grid">
 
-                    {{ form.submit(
-                        class="btn create-btn"
-                    ) }}
+<button type="submit" class="btn create-btn">Create Account</button>
+
 
                 </div>
 
@@ -175,7 +187,7 @@
 
                 Already have an account?
 
-                <a href="{{ url_for('login') }}">
+                <a href="login.php">
                     Sign In
                 </a>
 

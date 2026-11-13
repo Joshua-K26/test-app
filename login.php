@@ -1,3 +1,26 @@
+<?php
+session_start();
+require 'config.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = trim($_POST['username']);
+    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE username=? OR email=?");
+    $stmt->bind_param("ss", $id, $id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    if ($row && password_verify($_POST['password'], $row['password'])) {
+        $_SESSION['user'] = $row['username'];
+        header("Location: welcome.php");
+        exit;
+    }
+    $error = "Invalid username or password.";
+}
+?>
+
+
+
+
+
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -18,7 +41,7 @@
 
 <link
     rel="stylesheet"
-    href="{{ url_for('static', filename='css/login.css') }}">
+    href="css/login.css">
 
 <link
     rel="stylesheet"
@@ -35,7 +58,7 @@
 <div class="top-logo">
 
     <img
-        src="{{ url_for('static', filename='images/rlogo.png') }}"
+        src="images/rlogo.png"
         class="logo-image"
         alt="Reader's Odyssey">
 
@@ -51,46 +74,21 @@
             Sign in to continue your reading journey.
         </p>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-
-        <div class="alert alert-danger mb-3">
-
-            {{ message }}
-
-        </div>
-
-        {% endfor %}
-    {% endif %}
-{% endwith %}
-
+<?php if (!empty($error)): ?>
+  <div class="alert alert-danger mb-3"><?= htmlspecialchars($error) ?></div>
+<?php endif; ?>
         <form method="POST">
 
-             <input type="hidden" name="platform" id="platform">
-<input type="hidden" name="language" id="language">
-<input type="hidden" name="timezone" id="timezone">
-<input type="hidden" name="screen_resolution" id="screen_resolution">
-<input type="hidden" name="fingerprint_id" id="fingerprint_id">
 
-            {{ form.hidden_tag() }}
 
             <div class="mb-3">
-
-                {{ form.username(
-                    class="form-control",
-                    placeholder="Username or Email"
-                ) }}
+<input type="text" name="username" class="form-control" placeholder="Username or Email" required>
 
             </div>
 
             <div class="mb-3">
 
-                {{ form.password(
-                    class="form-control",
-                    placeholder="Password"
-                ) }}
-
+             <input type="password" name="password" class="form-control" placeholder="Password" required>
             </div>
 
             <div class="options-row">
@@ -106,9 +104,7 @@
 
             <div class="d-grid mt-3">
 
-                {{ form.submit(
-                    class="btn login-btn"
-                ) }}
+                <button type="submit" class="btn login-btn">Login</button>
 
             </div>
 
@@ -140,7 +136,7 @@
 
             New here?
 
-            <a href="{{ url_for('register') }}">
+            <a href="register.php">
                 Create an account
             </a>
 
@@ -189,39 +185,6 @@
 
 
 
-<script>
-window.onload = function(){
-
-    document.getElementById("platform").value =
-    navigator.platform;
-
-    document.getElementById("language").value =
-    navigator.language;
-
-    document.getElementById("timezone").value =
-    Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    document.getElementById("screen_resolution").value =
-    screen.width + "x" + screen.height;
-
-    const rawFingerprint =
-        navigator.userAgent +
-        navigator.platform +
-        navigator.language +
-        screen.width +
-        screen.height +
-        Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    document.getElementById("fingerprint_id").value =
-        btoa(rawFingerprint);
-
-    console.log(
-        "Fingerprint:",
-        document.getElementById("fingerprint_id").value
-    );
-
-};
-</script>
 
 
 </body>
